@@ -1,0 +1,31 @@
+{
+  "name": "uisounds",
+  "version": "0.1.0",
+  "description": "Petits sons d'interface synthétisés avec Web Audio, sans aucun fichier audio.",
+  "main": "uisounds.js",
+  "browser": "uisounds.js",
+  "unpkg": "uisounds.js",
+  "jsdelivr": "uisounds.js",
+  "files": [
+    "uisounds.js"
+  ],
+  "scripts": {
+    "test": "node test/smoke.js"
+  },
+  "keywords": [
+    "sound",
+    "ui",
+    "web-audio",
+    "synth",
+    "click",
+    "feedback"
+  ],
+  "homepage": "https://coroller1972.github.io/uisounds/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/coroller1972/uisounds.git"
+  },
+  "bugs": {
+    "url": "https://github.com/coroller1972/uisounds/issues"
+  }
+}

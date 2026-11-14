@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UISounds — banc d'essai</title>
+<style>
+  :root {
+    --bg: #f3f0e8;
+    --tile: #fffdf8;
+    --ink: #1d1b16;
+    --muted: #776f60;
+    --line: #dfd9ca;
+    --wave: #b9b09c;
+    --accent: #d9481f;
+    --accent-soft: #fbe6dd;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161512;
+      --tile: #201e1a;
+      --ink: #f1ede3;
+      --muted: #9b9484;
+      --line: #35312a;
+      --wave: #5d574b;
+      --accent: #ff7a50;
+      --accent-soft: #3a2219;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 15px/1.5 var(--sans);
+  }
+  main {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 48px 20px 72px;
+  }
+
+  header h1 {
+    margin: 0;
+    font: 600 34px/1.1 var(--mono);
+    letter-spacing: -0.02em;
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    margin: 10px 0 0;
+    max-width: 56ch;
+    color: var(--muted);
+  }
+
+  /* ── Réglages ── */
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 28px;
+    margin: 32px 0 20px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--tile);
+  }
+  .controls label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 12px var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .controls output {
+    min-width: 4.5ch;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  input[type=range] {
+    width: 130px;
+    accent-color: var(--accent);
+  }
+  .controls .spacer { flex: 1; }
+  .ghost {
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink);
+    font: 12px var(--mono);
+    cursor: pointer;
+  }
+  .ghost:hover { border-color: var(--muted); }
+  .ghost[aria-pressed=true] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* ── Pads ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+    gap: 12px;
+  }
+  .pad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 14px 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--tile);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: transform 0.08s, border-color 0.15s;
+  }
+  .pad:hover { border-color: var(--muted); }
+  .pad:focus-visible, .ghost:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  .pad.hit {
+    border-color: var(--accent);
+    transform: scale(0.975);
+  }
+  .pad .top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .pad .name { font: 600 19px var(--mono); }
+  .pad kbd {
+    min-width: 22px;
+    padding: 1px 6px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    color: var(--muted);
+    font: 11px var(--mono);
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .pad .desc {
+    min-height: 2.8em;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .pad .wave {
+    position: relative;
+    height: 44px;
+    margin-top: 10px;
+    overflow: hidden;
+  }
+  .pad canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  .pad .head {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: var(--accent);
+    opacity: 0;
+  }
+  .pad .dur {
+    margin-top: 6px;
+    color: var(--muted);
+    font: 11px var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Mode d'emploi ── */
+  section.usage { margin-top: 44px; }
+  section.usage h2 {
+    margin: 0 0 10px;
+    font: 600 13px var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .code {
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--tile);
+  }
+  .code pre {
+    margin: 0;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font: 13px/1.6 var(--mono);
+  }
+  .code .c { color: var(--muted); }
+  .code .s { color: var(--accent); }
+  .code .ghost {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--tile);
+  }
+  .hint {
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .hint code { font: 12px var(--mono); color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pad { transition: none; }
+    .pad.hit { transform: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>UI<span>Sounds</span></h1>
+    <p>Quatorze petits sons d'interface, entièrement synthétisés par script — aucun fichier audio.
+       Cliquez sur un pad ou utilisez la touche indiquée.</p>
+  </header>
+
+  <div class="controls">
+    <label>Volume
+      <input type="range" id="volume" min="0" max="1" step="0.05" value="0.8">
+      <output for="volume" id="volumeOut"></output>
+    </label>
+    <label>Hauteur
+      <input type="range" id="pitch" min="0.5" max="2" step="0.05" value="1">
+      <output for="pitch" id="pitchOut"></output>
+    </label>
+    <label>Variation
+      <input type="range" id="vary" min="0" max="0.25" step="0.01" value="0">
+      <output for="vary" id="varyOut"></output>
+    </label>
+    <span class="spacer"></span>
+    <button class="ghost" id="reset" type="button">Réinitialiser</button>
+    <button class="ghost" id="mute" type="button" aria-pressed="false">Muet</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <section class="usage">
+    <h2>Dans votre page</h2>
+    <div class="code">
+      <button class="ghost" id="copy" type="button">Copier</button>
+      <pre id="snippet"></pre>
+    </div>
+    <p class="hint">
+      L'extrait suit le dernier son joué et les réglages ci-dessus. Autres possibilités :
+      <code>UISounds.bind()</code> joue tout élément portant <code>data-sound="tap"</code>,
+      <code>UISounds.muted = true</code> coupe le son,
+      <code>UISounds.define(nom, recette)</code> ajoute le vôtre.
+    </p>
+  </section>
+</main>
+
+<script src="uisounds.js"></script>
+<script>
+(function () {
+  const DESCRIPTIONS = {
+    tap: 'Petit choc boisé et mat',
+    click: 'Clic mécanique net',
+    tick: 'Tic minuscule, cran de molette',
+    toc: 'Coup sec sur du bois',
+    pat: 'Tape feutrée et mate',
+    pop: 'Bulle qui éclate',
+    bloop: "Goutte d'eau",
+    blip: 'Bip rétro',
+    ding: 'Clochette de notification',
+    woof: 'Aboiement',
+    shh: 'Chut…',
+    whoosh: 'Souffle de glissement',
+    success: 'Trois notes montantes',
+    error: 'Deux notes basses, refus'
+  };
+  const KEYS = 'azertyuiopqsdfghjklmwxcvbn';
+
+  const $ = (id) => document.getElementById(id);
+  const grid = $('grid');
+  const controls = { volume: $('volume'), pitch: $('pitch'), vary: $('vary') };
+  const defaults = { volume: '0.8', pitch: '1', vary: '0' };
+  const pads = new Map();   // nom → { el, canvas, head, dur, buffer }
+  let lastPlayed = 'tap';
+
+  // ── Construction des pads ──
+  UISounds.names.forEach((name, i) => {
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'pad';
+    el.innerHTML =
+      '<span class="top"><span class="name"></span><kbd></kbd></span>' +
+      '<span class="desc"></span>' +
+      '<span class="wave"><canvas></canvas><span class="head"></span></span>' +
+      '<span class="dur">&nbsp;</span>';
+    el.querySelector('.name').textContent = name;
+    el.querySelector('kbd').textContent = KEYS[i] || '';
+    el.querySelector('.desc').textContent = DESCRIPTIONS[name] || '';
+    // pointerdown plutôt que click : le son part dès le contact.
+    el.addEventListener('pointerdown', (e) => { if (e.button === 0) trigger(name); });
+    // click sans pointeur = activation au clavier (Entrée / Espace).
+    el.addEventListener('click', (e) => { if (e.detail === 0) trigger(name); });
+    grid.appendChild(el);
+    pads.set(name, {
+      el,
+      canvas: el.querySelector('canvas'),
+      head: el.querySelector('.head'),
+      dur: el.querySelector('.dur'),
+      buffer: null
+    });
+  });
+
+  // ── Lecture ──
+  function settings() {
+    const o = {};
+    const pitch = parseFloat(controls.pitch.value);
+    const vary = parseFloat(controls.vary.value);
+    if (pitch !== 1) o.pitch = pitch;
+    if (vary > 0) o.vary = vary;
+    return o;
+  }
+
+  function trigger(name) {
+    const pad = pads.get(name);
+    if (!pad) return;
+    const seconds = UISounds.play(name, settings());
+    lastPlayed = name;
+    updateSnippet();
+
+    pad.el.classList.add('hit');
+    clearTimeout(pad.timer);
+    pad.timer = setTimeout(() => pad.el.classList.remove('hit'), 110);
+
+    if (pad.anim) pad.anim.cancel();
+    const width = pad.canvas.clientWidth;
+    pad.anim = pad.head.animate(
+      [
+        { transform: 'translateX(0)', opacity: 1 },
+        { transform: 'translateX(' + width + 'px)', opacity: 1 }
+      ],
+      { duration: Math.max(60, seconds * 1000), easing: 'linear' }
+    );
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+    const i = KEYS.indexOf(e.key.toLowerCase());
+    const name = e.key.length === 1 && i >= 0 ? UISounds.names[i] : null;
+    if (name) trigger(name);
+  });
+
+  // ── Formes d'onde ──
+  function draw(pad) {
+    const canvas = pad.canvas;
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    if (!w || !pad.buffer) return;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    const g = canvas.getContext('2d');
+    g.scale(dpr, dpr);
+    g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--wave').trim();
+
+    const data = pad.buffer.getChannelData(0);
+    let peak = 0;
+    for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i]));
+    const scale = peak ? 0.95 / peak : 1;
+    const step = data.length / w;
+    for (let x = 0; x < w; x++) {
+      let min = 0;
+      let max = 0;
+      const end = Math.min(data.length, Math.floor((x + 1) * step));
+      for (let i = Math.floor(x * step); i < end; i++) {
+        if (data[i] < min) min = data[i];
+        if (data[i] > max) max = data[i];
+      }
+      const y1 = (1 - max * scale) * h / 2;
+      const y2 = (1 - min * scale) * h / 2;
+      g.fillRect(x, y1, 1, Math.max(1, y2 - y1));
+    }
+  }
+
+  function renderAll() {
+    const pitch = parseFloat(controls.pitch.value);
+    pads.forEach((pad, name) => {
+      UISounds.render(name, { pitch }).then((buffer) => {
+        pad.buffer = buffer;
+        pad.dur.textContent = Math.round(buffer.duration * 1000) + ' ms';
+        draw(pad);
+      }).catch((err) => console.error(err));
+    });
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => pads.forEach(draw), 120);
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pads.forEach(draw));
+
+  // ── Réglages ──
+  function updateOutputs() {
+    $('volumeOut').textContent = Math.round(controls.volume.value * 100) + ' %';
+    $('pitchOut').textContent = '×' + parseFloat(controls.pitch.value).toFixed(2);
+    $('varyOut').textContent = '±' + Math.round(controls.vary.value * 100) + ' %';
+  }
+
+  function applyControls() {
+    UISounds.volume = parseFloat(controls.volume.value);
+    updateOutputs();
+    updateSnippet();
+  }
+
+  Object.values(controls).forEach((input) => input.addEventListener('input', applyControls));
+  controls.pitch.addEventListener('change', renderAll);
+
+  $('reset').addEventListener('click', () => {
+    Object.keys(controls).forEach((key) => { controls[key].value = defaults[key]; });
+    applyControls();
+    renderAll();
+  });
+
+  $('mute').addEventListener('click', (e) => {
+    UISounds.muted = !UISounds.muted;
+    e.currentTarget.setAttribute('aria-pressed', String(UISounds.muted));
+  });
+
+  // ── Extrait de code ──
+  function snippetText() {
+    const o = settings();
+    const parts = Object.keys(o).map((key) => key + ': ' + o[key]);
+    const args = parts.length ? ", { " + parts.join(', ') + ' }' : '';
+    const lines = ['<script src="uisounds.js"><\/script>', ''];
+    const volume = parseFloat(controls.volume.value);
+    if (volume !== 1) lines.push('UISounds.volume = ' + volume + ';');
+    lines.push("UISounds.play('" + lastPlayed + "'" + args + ');' +
+      (parts.length ? '' : '   // ou UISounds.' + lastPlayed + '()'));
+    return lines.join('\n');
+  }
+
+  function updateSnippet() {
+    const escaped = snippetText()
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/('[^']*'|"[^"]*")/g, '<span class="s">$1</span>')
+      .replace(/(\/\/.*)$/gm, '<span class="c">$1</span>');
+    $('snippet').innerHTML = escaped;
+  }
+
+  $('copy').addEventListener('click', (e) => {
+    const button = e.currentTarget;
+    navigator.clipboard.writeText(snippetText()).then(() => {
+      button.textContent = 'Copié';
+      setTimeout(() => { button.textContent = 'Copier'; }, 1200);
+    });
+  });
+
+  applyControls();
+  renderAll();
+})();
+</script>
+</body>
+</html>
