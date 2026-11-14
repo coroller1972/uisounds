@@ -20,6 +20,7 @@
     "click",
     "feedback"
   ],
+  "license": "MIT",
   "homepage": "https://coroller1972.github.io/uisounds/",
   "repository": {
     "type": "git",

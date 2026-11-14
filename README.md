@@ -97,3 +97,7 @@ npm pack     # produit uisounds-<version>.tgz
 La page de test ([`index.html`](index.html)) s'ouvre directement dans un navigateur, sans serveur.
 
 Pour publier une version : mettre à jour `version` dans `package.json`, puis pousser une étiquette `v<version>` (par exemple `v0.2.0`). La CI vérifie la correspondance et attache le `.tgz` à une release GitHub.
+
+## Licence
+
+[MIT](LICENSE)

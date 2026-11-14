@@ -1,5 +1,6 @@
 /*!
  * UISounds — petits sons d'interface 100 % synthétisés (Web Audio API).
+ * Licence MIT — https://github.com/coroller1972/uisounds
  * Aucun fichier audio : chaque son est une « recette » d'oscillateurs,
  * de bruit filtré et d'enveloppes.
  *
